@@ -1,0 +1,524 @@
+<!doctype html>
+<html lang="da">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Timer">
+<title>Timeregnskab</title>
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#EEF1F4" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#12161C" media="(prefers-color-scheme: dark)">
+<link rel="apple-touch-icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALQAAAC0CAIAAACyr5FlAAACAElEQVR42u3dMWrCUBjA8SR0k06ubo0guHgCwSO03qYH8BAu7qKunds7dBIP4uYQcNJCa95L3uvvNzkEDeHP95klKUf1rIBbKpcAcSAOxIE4EAfiQByIA3EgDhAH4kAciANxIA7EgTgQB+IAcSAOxIE4EAfiQByIA3EgDhAH4kAciANxIA7EgTgQB+JAHCAOxIE4EAfiQByIA3EgDsQB4kAciANxIA7EgTgQB+JAHCAO7nuK/Htv81WL3/b5PA56ttvJ4lfHbwbDnw/4OL8+cj7r3XF5+s4tjnab+M/2L9PmQ4RKKmWkXkmqk0MWEfoIN0IqZRghseNQRgZ9uJUlbhzGRh7Do1KGPqwVxEFv47BTctosJgfiQByIA3EgDsSBOBAH4kAcIA7EgTgQB+JAHIgDcSAOxAHiQByIA3EgDsSBOBAH4kAcf3T4endNO9TuYydNDsRBH+KwWfLYKaEmhz4yKMNaoYs4DI/Ux0bYyaGPpMsoQr9So+nD8yeTyyLefw4jJMUyimiv8br2YYr0v4mrclTPXHHcyiIOxIE4EAfiQByIA3EgDhAH4kAciANxIA7EgTgQB+IAcSAOxIE4EAfiQByIA3EgDsQB4kAciANxIA7EgTgQB+JAHCAOxIE4EAfiQByIA3EgDsQB4kAciANxIA7EgTgQB+JAHIgD7rgAZUZCh04hOIwAAAAASUVORK5CYII=">
+<style>
+:root{
+  --bg:#EEF1F4; --surface:#FFFFFF; --ink:#1C2430; --muted:#5F6B7A; --line:#D9DFE6; --empty:#DDE2E8;
+  --prod:#2F6FDB; --prac:#D9971C; --relax:#2F9B80; --waste:#C9475B; --sleep:#6E62B6; --train:#78A22F;
+  --display:ui-rounded, "SF Pro Rounded", -apple-system, "Helvetica Neue", Arial, sans-serif;
+  --body:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+  color-scheme:light;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#12161C; --surface:#1B212A; --ink:#E7ECF2; --muted:#93A0B0; --line:#2A323D; --empty:#262D37;
+    --prod:#5B8FEA; --prac:#E6AE45; --relax:#4DBB9C; --waste:#E0687A; --sleep:#9087D4; --train:#95C04A;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#12161C; --surface:#1B212A; --ink:#E7ECF2; --muted:#93A0B0; --line:#2A323D; --empty:#262D37;
+  --prod:#5B8FEA; --prac:#E6AE45; --relax:#4DBB9C; --waste:#E0687A; --sleep:#9087D4; --train:#95C04A;
+  color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px);-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 var(--body);padding-bottom:84px}
+button,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--prod);outline-offset:2px}
+.wrap{max-width:560px;margin:0 auto;padding:16px 18px 24px}
+.view{display:none}.view.on{display:block}
+
+/* date header */
+.datebar{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:4px 0 18px}
+.datebar h1{font:700 1.75rem/1.1 var(--display);margin:0;letter-spacing:-.01em;text-align:center;flex:1}
+.datebar h1 small{display:block;font:500 .9rem/1.3 var(--body);color:var(--muted);letter-spacing:0;margin-top:4px}
+.navbtn{width:44px;height:44px;border-radius:50%;border:1px solid var(--line);background:var(--surface);font-size:1.3rem;line-height:1;display:grid;place-items:center}
+.navbtn:disabled{opacity:.35;cursor:default}
+
+/* 24h strip */
+.strip{display:flex;height:64px;border-radius:14px;overflow:hidden;background:var(--empty);position:relative}
+.strip span{height:100%;transition:flex-basis .25s ease}
+.ticks{display:flex;justify-content:space-between;font-size:.75rem;color:var(--muted);margin:6px 2px 0}
+.stripnote{color:var(--muted);font-size:.9rem;margin:10px 0 22px}
+.stripnote b{color:var(--ink);font-weight:600}
+
+/* category rows */
+.rows{background:var(--surface);border-radius:18px;border:1px solid var(--line);overflow:hidden}
+.row{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:12px;padding:14px 14px 14px 16px;border-top:1px solid var(--line)}
+.row:first-child{border-top:0}
+.sw{width:12px;height:36px;border-radius:6px}
+.lbl strong{display:block;font-weight:600}
+.lbl span{display:block;font-size:.82rem;color:var(--muted);line-height:1.3}
+.step{display:flex;align-items:center;gap:5px}
+.step button.sm{font-size:.85rem;font-weight:600}
+.step button{width:38px;height:40px;border-radius:12px;border:1px solid var(--line);background:var(--bg);font-size:1.25rem;line-height:1}
+.step button:active{transform:scale(.94)}
+.val{width:52px;text-align:center;border:0;background:transparent;font:700 1.35rem/1 var(--display);padding:6px 0;border-radius:8px}
+.val:focus{background:var(--bg)}
+.sec{font:700 1.15rem/1.2 var(--display);margin:28px 0 10px}
+.sleeprow{grid-template-columns:auto 1fr auto auto}
+.mini{width:64px;text-align:center;border:1px solid var(--line);background:var(--bg);border-radius:10px;padding:9px 4px;font-weight:600}
+.minilbl{font-size:.72rem;color:var(--muted);text-align:center;margin-top:3px}
+textarea{width:100%;min-height:80px;border:1px solid var(--line);background:var(--surface);border-radius:14px;padding:12px 14px;resize:vertical}
+.hint{font-size:.85rem;color:var(--muted)}
+
+/* trend */
+.seg{display:flex;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:3px;gap:3px;margin-bottom:18px}
+.seg button{flex:1;border:0;background:transparent;border-radius:9px;padding:9px 0;font-weight:600;color:var(--muted)}
+.seg button.on{background:var(--ink);color:var(--bg)}
+.headline{font:700 1.6rem/1.15 var(--display);margin:0 0 6px;letter-spacing:-.01em}
+.sub{color:var(--muted);margin:0 0 18px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:16px}
+.chartbox{overflow-x:auto}
+.chartbox svg{display:block;width:100%;height:auto;min-width:300px}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:.8rem;color:var(--muted);margin-top:10px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.avg{display:grid;grid-template-columns:96px 1fr 58px;align-items:center;gap:10px;padding:7px 0}
+.avg .bar{height:10px;border-radius:5px;background:var(--empty);overflow:hidden}
+.avg .bar span{display:block;height:100%;border-radius:5px}
+.avg b{text-align:right;font-weight:600;font-variant-numeric:tabular-nums}
+.insight{padding:12px 0;border-top:1px solid var(--line)}
+.insight:first-child{border-top:0;padding-top:0}
+.insight p{margin:2px 0 0;color:var(--muted);font-size:.92rem}
+.empty{text-align:center;padding:36px 12px;color:var(--muted)}
+
+/* data */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;border-radius:12px;padding:12px 18px;font-weight:600;background:var(--ink);color:var(--bg)}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.btn:disabled{opacity:.4;cursor:default}
+.stack>*+*{margin-top:12px}
+.file{display:block;width:100%;font-size:.9rem}
+.status{font-size:.85rem;color:var(--muted)}
+ol.steps{padding-left:20px;margin:8px 0 0;color:var(--muted);font-size:.92rem}
+ol.steps li{margin:4px 0}
+
+/* tab bar */
+.tabs{position:fixed;left:0;right:0;bottom:0;background:var(--surface);border-top:1px solid var(--line);display:flex;justify-content:center;padding-bottom:env(safe-area-inset-bottom,0px);z-index:20}
+.tabs div{display:flex;max-width:560px;width:100%}
+.tabs button{flex:1;border:0;background:transparent;padding:10px 0 12px;font-size:.78rem;font-weight:600;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:4px}
+.tabs button svg{width:24px;height:24px}
+.tabs button.on{color:var(--ink)}
+.toast{position:fixed;left:50%;bottom:calc(92px + env(safe-area-inset-bottom,0px));transform:translateX(-50%) translateY(20px);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:.9rem;opacity:0;pointer-events:none;transition:.2s;z-index:30;max-width:90vw}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+@media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<main class="wrap">
+  <!-- I DAG -->
+  <section class="view on" id="v-day">
+    <div class="datebar">
+      <button class="navbtn" id="prev" aria-label="Forrige dag">‹</button>
+      <h1 id="dTitle">I dag<small id="dSub"></small></h1>
+      <button class="navbtn" id="next" aria-label="Næste dag">›</button>
+    </div>
+
+    <div class="strip" id="strip" role="img" aria-label="Døgnets fordeling"></div>
+    <div class="ticks"><span>0</span><span>6</span><span>12</span><span>18</span><span>24 t</span></div>
+    <p class="stripnote" id="stripNote"></p>
+
+    <div class="rows" id="rows"></div>
+
+    <h2 class="sec">Søvn natten før</h2>
+    <div class="rows">
+      <div class="row sleeprow">
+        <span class="sw" style="background:var(--sleep)"></span>
+        <div class="lbl"><strong>Søvn</strong><span>Fra Garmin eller manuelt</span></div>
+        <div><input class="mini" id="sleepH" inputmode="decimal" placeholder="–" aria-label="Søvn i timer"><div class="minilbl">timer</div></div>
+        <div><input class="mini" id="sleepS" inputmode="numeric" placeholder="–" aria-label="Søvnscore"><div class="minilbl">score</div></div>
+      </div>
+    </div>
+
+    <h2 class="sec">Note</h2>
+    <textarea id="note" placeholder="Hvad gjorde dagen god eller svær?"></textarea>
+  </section>
+
+  <!-- UDVIKLING -->
+  <section class="view" id="v-trend">
+    <div class="seg" id="seg">
+      <button data-n="7" class="on">7 dage</button>
+      <button data-n="30">30 dage</button>
+      <button data-n="90">90 dage</button>
+    </div>
+    <div id="trend"></div>
+  </section>
+
+  <!-- DATA -->
+  <section class="view" id="v-data">
+    <h1 class="headline">Data</h1>
+    <p class="sub" id="storeStatus">Alt gemmes kun på denne telefon. Intet sendes nogen steder hen.</p>
+
+    <h2 class="sec">Importér søvn fra Garmin</h2>
+    <div class="card stack">
+      <p style="margin:0">Indlæs en CSV-fil med søvndata. Appen finder selv dato, varighed og eventuel søvnscore og lægger dem på de rigtige dage. Dine andre registreringer bliver ikke rørt.</p>
+      <ol class="steps">
+        <li>Åbn connect.garmin.com i en browser og log ind.</li>
+        <li>Gå til Rapporter → Søvn (eller Sundhedsstatistik → Søvn).</li>
+        <li>Vælg periode og eksportér som CSV.</li>
+        <li>Vælg filen herunder, eller indsæt teksten.</li>
+      </ol>
+      <input type="file" class="file" id="csvFile" accept=".csv,text/csv,text/plain">
+      <textarea id="csvText" placeholder="…eller indsæt CSV her, fx&#10;Dato,Varighed,Score&#10;2026-10-14,7h 32min,81"></textarea>
+      <div><button class="btn" id="csvParse">Læs data</button></div>
+      <div id="csvPreview" class="status"></div>
+    </div>
+
+    <h2 class="sec">Backup</h2>
+    <div class="card stack">
+      <p style="margin:0">Dine data ligger kun i appen på telefonen. Gem en backup i Filer eller iCloud Drive en gang imellem. Filen kan også åbnes i Excel eller Numbers.</p>
+      <div><button class="btn ghost" id="export">Gem backup (CSV)</button></div>
+      <p class="hint" style="margin:0">Har du skiftet telefon eller ryddet Safari? Gendan fra en backup-fil her. Dage i filen overskriver dagene på telefonen.</p>
+      <input type="file" class="file" id="restoreFile" accept=".csv,text/csv,text/plain">
+      <div id="restorePreview" class="status"></div>
+    </div>
+
+    <h2 class="sec">På hjemmeskærmen</h2>
+    <div class="card">
+      <p style="margin:0" class="hint">Åbn siden i Safari, tryk på Del-knappen og vælg «Føj til hjemmeskærm». Så åbner den som en app.</p>
+    </div>
+  </section>
+</main>
+
+<nav class="tabs" aria-label="Sektioner"><div>
+  <button data-v="day" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="9" width="18" height="6" rx="3"/><path d="M9 9v6M14 9v6"/></svg>Dag</button>
+  <button data-v="trend"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V11M10 19V7M16 19v-5M21 4l-6 5-4-2-7 5"/></svg>Udvikling</button>
+  <button data-v="data"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5M4 20h16"/></svg>Data</button>
+</div></nav>
+<div class="toast" id="toast"></div>
+
+<script>
+const CATS=[
+  {k:'prod', name:'Produktiv',  hint:'Arbejde, studie, fokus'},
+  {k:'prac', name:'Praktisk',   hint:'Husholdning, ærinder'},
+  {k:'train',name:'Træning',    hint:'Løb, styrke, sport'},
+  {k:'relax',name:'Afslapning', hint:'Hvile, venner, hobby'},
+  {k:'waste',name:'Spildt',     hint:'Tid der forsvandt'}
+];
+const LKEY='timeregnskab:v1';
+const $=s=>document.querySelector(s);
+const pad=n=>String(n).padStart(2,'0');
+const ymd=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+const fromYmd=s=>{const[a,b,c]=s.split('-').map(Number);return new Date(a,b-1,c)};
+const addDays=(s,n)=>{const d=fromYmd(s);d.setDate(d.getDate()+n);return ymd(d)};
+const today=()=>ymd(new Date());
+const num=x=>(typeof x==='number'&&isFinite(x))?x:0;
+const fmt=(x,dec=1)=>{const r=Math.round(x*Math.pow(10,dec))/Math.pow(10,dec);return String(r).replace('.',',')};
+const fmtH=x=>fmt(x)+' t';
+const hm=x=>{const m=Math.round(x*60);return Math.floor(m/60)+':'+pad(m%60)};
+const fmtHM=x=>{const m=Math.round(x*60),h=Math.floor(m/60),r=m%60;return (h?h+' t':'')+(h&&r?' ':'')+(r?r+' min':'')||'0 t'};
+const docId=s=>'d'+s; const fromDocId=s=>s.replace(/^d/,'');
+
+let days={};           // 'YYYY-MM-DD' -> {prod,prac,relax,waste,sleep,score,note,t}
+let cur=today();
+let period=7;
+
+/* ---------- storage ---------- */
+function readLocal(){try{return JSON.parse(localStorage.getItem(LKEY)||'{}')||{}}catch(e){return {}}}
+function writeLocal(){try{localStorage.setItem(LKEY,JSON.stringify(days))}catch(e){}}
+function persist(){writeLocal()}
+
+/* ---------- day view ---------- */
+function getDay(date){return days[date]||{}}
+function setField(date,k,v){
+  const d=Object.assign({},getDay(date));
+  if(v===null||v===''||(typeof v==='number'&&!isFinite(v))) delete d[k]; else d[k]=v;
+  d.t=Date.now();
+  days[date]=d; persist(date);
+}
+function buildRows(){
+  $('#rows').innerHTML=CATS.map(c=>`
+    <div class="row">
+      <span class="sw" style="background:var(--${c.k})"></span>
+      <div class="lbl"><strong>${c.name}</strong><span>${c.hint}</span></div>
+      <div class="step">
+        <button data-k="${c.k}" data-d="-10" aria-label="${c.name} minus 10 minutter">−</button>
+        <input class="val" id="val-${c.k}" inputmode="decimal" aria-label="${c.name} timer og minutter">
+        <button class="sm" data-k="${c.k}" data-d="10" aria-label="${c.name} plus 10 minutter">+10</button>
+        <button class="sm" data-k="${c.k}" data-d="30" aria-label="${c.name} plus 30 minutter">+30</button>
+      </div>
+    </div>`).join('');
+  $('#rows').addEventListener('click',e=>{
+    const b=e.target.closest('button[data-k]'); if(!b) return;
+    const k=b.dataset.k, d=getDay(cur);
+    const nv=Math.max(0,Math.min(24,Math.round((num(d[k])+parseFloat(b.dataset.d)/60)*60)/60));
+    setField(cur,k,nv||null); renderDay();
+  });
+  CATS.forEach(c=>{
+    $('#val-'+c.k).addEventListener('change',e=>{
+      const v=parseDuration(e.target.value);
+      setField(cur,c.k,v&&v>0?Math.min(24,Math.round(v*60)/60):null); renderDay();
+    });
+  });
+}
+function renderDay(){
+  const d=getDay(cur), t=today();
+  const date=fromYmd(cur);
+  const label=cur===t?'I dag':cur===addDays(t,-1)?'I går':date.toLocaleDateString('da-DK',{weekday:'long'});
+  $('#dTitle').firstChild.textContent=label.charAt(0).toUpperCase()+label.slice(1);
+  $('#dSub').textContent=date.toLocaleDateString('da-DK',{day:'numeric',month:'long',year:'numeric'});
+  $('#next').disabled=cur>=t;
+
+  const parts=[['sleep',num(d.sleep)],...CATS.map(c=>[c.k,num(d[c.k])])];
+  const total=parts.reduce((a,p)=>a+p[1],0);
+  const scale=total>24?24/total:1;
+  $('#strip').innerHTML=parts.filter(p=>p[1]>0).map(p=>`<span style="flex:0 0 ${p[1]/24*100*scale}%;background:var(--${p[0]})"></span>`).join('');
+  const awake=CATS.reduce((a,c)=>a+num(d[c.k]),0);
+  const left=Math.max(0,24-total);
+  $('#stripNote').innerHTML = total===0
+    ? 'Brug +10 og +30 for at lægge minutter til. Du kan også trykke på tallet og skrive fx 1:20.'
+    : `<b>${fmtHM(awake)}</b> vågen tid registreret${num(d.sleep)?` og <b>${fmtHM(d.sleep)}</b> søvn`:''}. ${total>24?'Det er mere end et døgn, så tjek tallene.':left>0?fmtHM(left)+' af døgnet er ikke fordelt.':'Hele døgnet er fordelt.'}`;
+  CATS.forEach(c=>{const el=$('#val-'+c.k); if(document.activeElement!==el) el.value=hm(num(d[c.k]))});
+  if(document.activeElement!==$('#sleepH')) $('#sleepH').value=d.sleep?fmt(d.sleep,2):'';
+  if(document.activeElement!==$('#sleepS')) $('#sleepS').value=d.score!=null?d.score:'';
+  if(document.activeElement!==$('#note')) $('#note').value=d.note||'';
+}
+
+/* ---------- trend view ---------- */
+function rangeDates(n,endDate){const out=[];for(let i=n-1;i>=0;i--) out.push(addDays(endDate,-i));return out}
+function hasData(d){return d&&CATS.some(c=>num(d[c.k])>0)}
+function avgOf(dates,k){const ds=dates.map(getDay).filter(hasData);if(!ds.length) return 0;return ds.reduce((a,d)=>a+num(d[k]),0)/ds.length}
+function renderTrend(){
+  const end=today(), dates=rangeDates(period,end);
+  const logged=dates.filter(x=>hasData(getDay(x)));
+  const box=$('#trend');
+  if(!logged.length){
+    box.innerHTML=`<div class="card empty"><p class="headline" style="font-size:1.25rem">Ingen dage registreret endnu</p><p>Registrér et par dage under Dag, så viser udviklingen sig her.</p></div>`;
+    return;
+  }
+  const prevDates=rangeDates(period,addDays(end,-period));
+  const pNow=avgOf(dates,'prod'), pPrev=avgOf(prevDates,'prod');
+  const prevLogged=prevDates.some(x=>hasData(getDay(x)));
+  const diff=pNow-pPrev;
+  const cmp=prevLogged
+    ? (Math.abs(diff)<0.05?'Samme niveau som perioden før.':`${diff>0?'Op':'Ned'} ${fmtH(Math.abs(diff))} pr. dag i forhold til de ${period} dage før.`)
+    : `${logged.length} af ${period} dage registreret.`;
+
+  let html=`<p class="headline">${fmtH(pNow)} produktiv tid pr. dag</p><p class="sub">${cmp}</p>`;
+  html+=`<div class="card"><div class="chartbox">${chartSvg(dates)}</div>
+    <div class="legend">${CATS.map(c=>`<span><i style="background:var(--${c.k})"></i>${c.name}</span>`).join('')}${period>7?'<span><i style="background:var(--ink);height:3px;vertical-align:3px"></i>Produktiv, 7-dages snit</span>':''}</div></div>`;
+
+  // averages
+  const avgs=CATS.map(c=>[c,avgOf(dates,c.k)]);
+  const maxA=Math.max(1,...avgs.map(a=>a[1]));
+  html+=`<h2 class="sec">Snit pr. registreret dag</h2><div class="card">`+avgs.map(([c,v])=>`
+    <div class="avg"><span>${c.name}</span><div class="bar"><span style="width:${v/maxA*100}%;background:var(--${c.k})"></span></div><b>${fmtH(v)}</b></div>`).join('')+`</div>`;
+
+  // insights
+  const ins=[];
+  const pw=dates.map(getDay).filter(hasData);
+  const sumP=pw.reduce((a,d)=>a+num(d.prod),0), sumW=pw.reduce((a,d)=>a+num(d.waste),0);
+  if(sumP+sumW>0){
+    const r=sumP/(sumP+sumW);
+    ins.push(['Fokusandel',`${Math.round(r*100)} %`,`Af den tid der kunne være produktiv eller spildt, blev ${Math.round(r*100)} % brugt produktivt.`]);
+  }
+  // weekday (all history)
+  const all=Object.keys(days).filter(k=>hasData(days[k]));
+  const wd=[0,0,0,0,0,0,0], wn=[0,0,0,0,0,0,0];
+  all.forEach(k=>{const i=(fromYmd(k).getDay()+6)%7;wd[i]+=num(days[k].prod);wn[i]++});
+  const wdAvg=wd.map((s,i)=>wn[i]>=2?s/wn[i]:null);
+  const valid=wdAvg.map((v,i)=>[v,i]).filter(x=>x[0]!=null);
+  if(valid.length>=3){
+    const names=['mandag','tirsdag','onsdag','torsdag','fredag','lørdag','søndag'];
+    const best=valid.reduce((a,b)=>b[0]>a[0]?b:a), worst=valid.reduce((a,b)=>b[0]<a[0]?b:a);
+    ins.push(['Bedste ugedag',names[best[1]].replace(/^./,c=>c.toUpperCase()),`I snit ${fmtH(best[0])} produktiv tid. Svagest er ${names[worst[1]]} med ${fmtH(worst[0])}.`]);
+  }
+  // sleep correlation (all history)
+  const withSleep=all.filter(k=>num(days[k].sleep)>0);
+  const good=withSleep.filter(k=>days[k].sleep>=7), bad=withSleep.filter(k=>days[k].sleep<7);
+  if(good.length>=3&&bad.length>=3){
+    const a=good.reduce((s,k)=>s+num(days[k].prod),0)/good.length;
+    const b=bad.reduce((s,k)=>s+num(days[k].prod),0)/bad.length;
+    ins.push(['Søvn og produktivitet',`${fmtH(a)} mod ${fmtH(b)}`,`Produktiv tid efter mindst 7 timers søvn sammenlignet med nætter under 7 timer (${good.length} og ${bad.length} dage).`]);
+  } else if(withSleep.length){
+    ins.push(['Søvn og produktivitet','Mangler data','Når du har mindst tre nætter over og tre under 7 timer, viser appen hvordan søvnen hænger sammen med din produktive tid.']);
+  }
+  const avgSleep=dates.map(getDay).filter(d=>num(d.sleep)>0);
+  if(avgSleep.length) ins.push(['Søvn i perioden',fmtH(avgSleep.reduce((a,d)=>a+d.sleep,0)/avgSleep.length),`Snit over ${avgSleep.length} nætter med søvndata.`]);
+
+  if(ins.length) html+=`<h2 class="sec">Mønstre</h2><div class="card">`+ins.map(i=>`<div class="insight"><strong>${i[0]}: ${i[1]}</strong><p>${i[2]}</p></div>`).join('')+`</div>`;
+  box.innerHTML=html;
+}
+function chartSvg(dates){
+  const W=600,H=230,L=30,R=8,T=10,B=26, n=dates.length;
+  const data=dates.map(getDay);
+  const maxT=Math.max(8,...data.map(d=>CATS.reduce((a,c)=>a+num(d[c.k]),0)));
+  const yMax=Math.ceil(maxT/4)*4;
+  const y=v=>T+(H-T-B)*(1-v/yMax);
+  const slot=(W-L-R)/n, bw=Math.max(2,slot*(n>30?0.72:0.6));
+  let s=`<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Timer pr. dag">`;
+  for(let v=0;v<=yMax;v+=4){s+=`<line x1="${L}" x2="${W-R}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)" stroke-width="1"/><text x="${L-6}" y="${y(v)+4}" text-anchor="end" font-size="11" fill="var(--muted)">${v}</text>`}
+  data.forEach((d,i)=>{
+    const x=L+slot*i+(slot-bw)/2; let acc=0;
+    CATS.forEach(c=>{const v=num(d[c.k]); if(v>0){s+=`<rect x="${x}" y="${y(acc+v)}" width="${bw}" height="${y(acc)-y(acc+v)}" fill="var(--${c.k})"/>`;acc+=v}});
+    const show = n<=7 || (n<=30 ? i%5===0||i===n-1 : i%15===0||i===n-1);
+    if(show){
+      const dt=fromYmd(dates[i]);
+      const lab=n<=7?dt.toLocaleDateString('da-DK',{weekday:'short'}).replace('.',''):dt.getDate()+'/'+(dt.getMonth()+1);
+      s+=`<text x="${x+bw/2}" y="${H-8}" text-anchor="middle" font-size="11" fill="var(--muted)">${lab}</text>`;
+    }
+  });
+  if(n>7){
+    const pts=[];
+    data.forEach((d,i)=>{
+      const win=dates.slice(Math.max(0,i-6),i+1).map(getDay).filter(hasData);
+      if(win.length>=3) pts.push([L+slot*i+slot/2, y(win.reduce((a,x)=>a+num(x.prod),0)/win.length)]);
+    });
+    if(pts.length>1) s+=`<polyline points="${pts.map(p=>p.map(v=>v.toFixed(1)).join(',')).join(' ')}" fill="none" stroke="var(--ink)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>`;
+  }
+  return s+'</svg>';
+}
+
+/* ---------- CSV import / export ---------- */
+function splitCsv(line,delim){
+  const out=[];let curr='',q=false;
+  for(let i=0;i<line.length;i++){const ch=line[i];
+    if(ch==='"'){if(q&&line[i+1]==='"'){curr+='"';i++}else q=!q}
+    else if(ch===delim&&!q){out.push(curr);curr=''}
+    else curr+=ch;}
+  out.push(curr);return out.map(x=>x.trim());
+}
+function parseDuration(raw){
+  const s=String(raw||'').trim().toLowerCase(); if(!s||s==='--') return null;
+  let m=s.match(/(\d+)\s*(?:h|t)[a-zæøå]*\.?\s*(?:(\d+)\s*m)?/); if(m) return +m[1]+(m[2]?+m[2]/60:0);
+  m=s.match(/^(\d{1,2}):(\d{2})(?::\d{2})?$/); if(m) return +m[1]+ +m[2]/60;
+  m=s.match(/^(\d+)\s*m(in)?/); if(m) return +m[1]/60;
+  const n=parseFloat(s.replace(',','.')); if(isFinite(n)) return n>24?n/60:n;
+  return null;
+}
+function mk(y,m,d){const dt=new Date(+y,+m-1,+d);return isNaN(dt)?null:ymd(dt)}
+function parseDate(raw){
+  const s=String(raw||'').trim(); if(!s) return null;
+  let m=s.match(/(\d{4})-(\d{1,2})-(\d{1,2})/); if(m) return mk(m[1],m[2],m[3]);
+  m=s.match(/^(\d{1,2})[.\/-](\d{1,2})[.\/-](\d{4})/); if(m) return mk(m[3],m[2],m[1]);
+  const dt=new Date(s); if(!isNaN(dt)&&/\d{4}/.test(s)) return ymd(dt);
+  return null;
+}
+let pendingImport=[];
+function parseSleepCsv(text){
+  const lines=text.split(/\r?\n/).filter(l=>l.trim());
+  if(!lines.length) return [];
+  const first=lines[0];
+  const delim=(first.match(/;/g)||[]).length>(first.match(/,/g)||[]).length?';':first.includes('\t')?'\t':',';
+  const head=splitCsv(first,delim).map(h=>h.toLowerCase());
+  let di=head.findIndex(h=>/date|dato|^dag|day/.test(h));
+  let ui=head.findIndex(h=>/duration|varighed|total sleep|samlet|søvn|sleep/.test(h)&&!/score|need|behov|bed|wake|start|end|date|dato/.test(h));
+  let si=head.findIndex(h=>/score/.test(h));
+  let start=1;
+  if(di<0&&ui<0){di=0;ui=1;start=0}
+  if(di<0) di=0;
+  if(ui<0) ui=head.findIndex((h,i)=>i!==di&&i!==si);
+  const out=[];
+  for(let i=start;i<lines.length;i++){
+    const c=splitCsv(lines[i],delim);
+    const date=parseDate(c[di]), dur=parseDuration(c[ui]);
+    if(!date||dur==null||dur<=0||dur>16) continue;
+    const sc=si>=0?parseInt(c[si],10):NaN;
+    out.push({date,sleep:Math.round(dur*100)/100,score:isFinite(sc)&&sc>=0&&sc<=100?sc:null});
+  }
+  return out;
+}
+function showPreview(){
+  const el=$('#csvPreview');
+  if(!pendingImport.length){el.innerHTML='Fandt ingen nætter. Tjek at filen har en kolonne med dato og en med søvnens varighed.';return}
+  const ds=pendingImport.map(r=>r.date).sort();
+  const f=d=>fromYmd(d).toLocaleDateString('da-DK',{day:'numeric',month:'short',year:'numeric'});
+  el.innerHTML=`Fandt ${pendingImport.length} nætter fra ${f(ds[0])} til ${f(ds[ds.length-1])}. <button class="btn" id="csvApply" style="margin-top:10px">Importér søvn</button>`;
+  $('#csvApply').onclick=()=>{
+    pendingImport.forEach(r=>{
+      const d=Object.assign({},getDay(r.date)); d.sleep=r.sleep; if(r.score!=null) d.score=r.score; d.t=Date.now();
+      days[r.date]=d; persist(r.date);
+    });
+    toast(`Importerede ${pendingImport.length} nætter`);
+    pendingImport=[]; el.textContent=''; $('#csvText').value=''; $('#csvFile').value='';
+    renderDay(); renderTrend();
+  };
+}
+$('#csvFile').addEventListener('change',async e=>{
+  const f=e.target.files[0]; if(!f) return;
+  pendingImport=parseSleepCsv(await f.text()); showPreview();
+});
+$('#csvParse').addEventListener('click',()=>{pendingImport=parseSleepCsv($('#csvText').value); showPreview()});
+
+function buildCsv(){
+  const esc=v=>{v=v==null?'':String(v);return /[",\n;]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v};
+  const rows=[['dato','produktiv','praktisk','traening','afslapning','spildt','soevn','soevnscore','note']];
+  Object.keys(days).sort().forEach(k=>{const d=days[k];rows.push([k,num(d.prod),num(d.prac),num(d.train),num(d.relax),num(d.waste),num(d.sleep)||'',d.score??'',d.note||''])});
+  return rows.map(r=>r.map(esc).join(',')).join('\n');
+}
+$('#export').addEventListener('click',async()=>{
+  const name='timeregnskab-'+today()+'.csv';
+  const file=new File([buildCsv()],name,{type:'text/csv'});
+  try{
+    if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],title:name});return}
+  }catch(e){if(e&&e.name==='AbortError')return}
+  const a=document.createElement('a');a.href=URL.createObjectURL(file);a.download=name;
+  document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1500);
+});
+$('#restoreFile').addEventListener('change',async e=>{
+  const f=e.target.files[0], el=$('#restorePreview'); if(!f) return;
+  const lines=(await f.text()).split(/\r?\n/).filter(l=>l.trim());
+  const head=lines.length?splitCsv(lines[0],','):[];
+  if(head[0]!=='dato'||!head.includes('produktiv')){el.textContent='Filen ligner ikke en backup fra appen. Søvndata fra Garmin indlæses under Importér søvn.';return}
+  const rec={};
+  lines.slice(1).forEach(l=>{
+    const c=splitCsv(l,','), o={};
+    head.forEach((h,i)=>o[h]=c[i]);
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(o.dato||'')) return;
+    const d={t:Date.now()};
+    [['produktiv','prod'],['praktisk','prac'],['traening','train'],['afslapning','relax'],['spildt','waste'],['soevn','sleep']].forEach(([h,k])=>{const v=parseFloat(o[h]);if(isFinite(v)&&v>0)d[k]=v});
+    const sc=parseInt(o.soevnscore,10); if(isFinite(sc)) d.score=sc;
+    if(o.note) d.note=o.note;
+    rec[o.dato]=d;
+  });
+  const n=Object.keys(rec).length;
+  if(!n){el.textContent='Fandt ingen dage i filen.';return}
+  el.innerHTML=`Fandt ${n} dage. <button class="btn" id="restoreApply" style="margin-top:10px">Gendan ${n} dage</button>`;
+  $('#restoreApply').onclick=()=>{Object.assign(days,rec);writeLocal();el.textContent='';e.target.value='';toast(`Gendannede ${n} dage`);renderDay();renderTrend()};
+});
+
+/* ---------- wiring ---------- */
+let toastT;
+function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('on'),2600)}
+$('#prev').onclick=()=>{cur=addDays(cur,-1);renderDay()};
+$('#next').onclick=()=>{if(cur<today()){cur=addDays(cur,1);renderDay()}};
+$('#sleepH').addEventListener('change',e=>{const v=parseDuration(e.target.value);setField(cur,'sleep',v&&v>0?Math.round(v*100)/100:null);renderDay()});
+$('#sleepS').addEventListener('change',e=>{const v=parseInt(e.target.value,10);setField(cur,'score',isFinite(v)&&v>=0&&v<=100?v:null);renderDay()});
+$('#note').addEventListener('input',e=>{setField(cur,'note',e.target.value||null)});
+document.querySelectorAll('.tabs button').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('.tabs button').forEach(x=>x.classList.toggle('on',x===b));
+  document.querySelectorAll('.view').forEach(v=>v.classList.toggle('on',v.id==='v-'+b.dataset.v));
+  if(b.dataset.v==='trend') renderTrend();
+  if(b.dataset.v==='day') renderDay();
+  window.scrollTo(0,0);
+}));
+$('#seg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;period=+b.dataset.n;
+  document.querySelectorAll('#seg button').forEach(x=>x.classList.toggle('on',x===b));renderTrend()});
+// swipe between days
+let sx=null;
+$('#v-day').addEventListener('touchstart',e=>{if(e.target.closest('input,textarea,button'))return;sx=e.touches[0].clientX},{passive:true});
+$('#v-day').addEventListener('touchend',e=>{if(sx==null)return;const dx=e.changedTouches[0].clientX-sx;sx=null;
+  if(dx>70) $('#prev').click(); else if(dx<-70) $('#next').click();});
+// new day after midnight
+document.addEventListener('visibilitychange',()=>{if(!document.hidden){renderDay()}});
+
+days=readLocal();
+buildRows(); renderDay(); renderTrend();
+try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist()}catch(e){}
+</script>
+</body>
+</html>
